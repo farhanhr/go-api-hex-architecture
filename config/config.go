@@ -38,8 +38,8 @@ type Config struct {
 func NewConfig() *Config {
 	return &Config{
 		App: App{
-			AppPort: viper.GetString("APP_ENV"),
-			AppEnv:  viper.GetString("APP_PORT"),
+			AppPort: viper.GetString("APP_PORT"),
+			AppEnv:  viper.GetString("APP_ENV"),
 
 			JwtSecretKey: viper.GetString("JWT_SECRET_KEY"),
 			JwtIssuer:    viper.GetString("JWT_ISSUER"),
