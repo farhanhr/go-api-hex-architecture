@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"gonews/config"
+	"gonews/internal/adapter/handler"
+	"gonews/internal/adapter/repository"
+	"gonews/internal/core/service"
 	"gonews/lib/auth"
 	"gonews/lib/middleware"
 	"gonews/lib/pagination"
@@ -21,7 +24,7 @@ import (
 
 func RunServer() {
 	cfg := config.NewConfig()
-	_ , err := cfg.ConnectionPostgres()
+	db , err := cfg.ConnectionPostgres()
 
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
@@ -32,9 +35,19 @@ func RunServer() {
 	cdfR2 := cfg.LoadAWSConfig()
 	_ = s3.NewFromConfig(cdfR2)
 
-	_ = auth.NewJwt(cfg)
+	jwt := auth.NewJwt(cfg)
 	_ = middleware.NewMiddleware(cfg)
 	_ = pagination.NewPagination()
+
+	//repository
+	authRepo := repository.NewAuthRepository(db.DB)
+
+
+	//service
+	authService := service.NewAuthService(authRepo, cfg, jwt)
+
+	//handler
+	authHandler := handler.NewAuthHandler(authService)
 
 	app := fiber.New()
 	app.Use(cors.New())
@@ -43,8 +56,9 @@ func RunServer() {
 		Format: "[${time}] %{ip} %{status} - %{latency} %{method} %{path}\n",
 	}))
 
-	_ = app.Group("/api")
-
+	api := app.Group("/api")
+	api.Post("/login", authHandler.Login)
+	
 	go func() {
 		if cfg.App.AppPort == "" {
 			cfg.App.AppPort = os.Getenv("APP_PORT")
