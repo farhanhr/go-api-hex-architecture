@@ -24,7 +24,7 @@ import (
 
 func RunServer() {
 	cfg := config.NewConfig()
-	db , err := cfg.ConnectionPostgres()
+	db, err := cfg.ConnectionPostgres()
 
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)

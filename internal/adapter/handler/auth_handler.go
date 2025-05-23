@@ -5,6 +5,7 @@ import (
 	"gonews/internal/adapter/handler/response"
 	"gonews/internal/core/domain/entity"
 	"gonews/internal/core/service"
+	validatorLib "gonews/lib/validator"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -24,9 +25,10 @@ type authHandler struct {
 	authService service.AuthService
 }
 
+// Login implements AuthHandler.
 func (a *authHandler) Login(c *fiber.Ctx) error {
 	req := request.LoginRequest{}
-	resp := response.SuccessfulAuthResponse{}
+	resp := response.SuccessAuthResponse{}
 
 	if err = c.BodyParser(&req); err != nil {
 		code = "[HANDLER] Login - 1"
@@ -37,7 +39,7 @@ func (a *authHandler) Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
 	}
 
-	if err = validate.Struct(req); err != nil {
+	if err = validatorLib.ValidateStruct(req); err != nil {
 		code = "[HANDLER] Login - 2"
 		log.Errorw(code, err)
 		errorResp.Meta.Status = false
@@ -47,7 +49,7 @@ func (a *authHandler) Login(c *fiber.Ctx) error {
 	}
 
 	reqLogin := entity.LoginRequest{
-		Email: req.Email,
+		Email:    req.Email,
 		Password: req.Password,
 	}
 
@@ -58,13 +60,16 @@ func (a *authHandler) Login(c *fiber.Ctx) error {
 		errorResp.Meta.Status = false
 		errorResp.Meta.Message = err.Error()
 
-		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+		if err.Error() == "invalid email or password" {
+			return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
 	}
 
 	resp.Meta.Status = true
 	resp.Meta.Message = "Login successful"
 	resp.AccessToken = result.AccessToken
-	resp.ExpiredAt = result.ExpiresAt
+	resp.ExpiresAt = result.ExpiresAt
 
 	return c.JSON(resp)
 }

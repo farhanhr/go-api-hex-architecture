@@ -1,7 +1,7 @@
 package response
 
-type SuccessfulAuthResponse struct {
+type SuccessAuthResponse struct {
 	Meta
-	AccessToken string `json:"acess_token"`
-	ExpiredAt int64 `json:"expired_at"`
+	AccessToken string `json:"access_token"`
+	ExpiresAt   int64  `json:"expires_at"`
 }

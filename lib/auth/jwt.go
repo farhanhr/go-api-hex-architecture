@@ -9,16 +9,17 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type JWT interface {
-	GenerateToken(data *entity.JwtData)(string, int64, error)
-	VerifyAccessToken(token string)(*entity.JwtData, error)
+type Jwt interface {
+	GenerateToken(data *entity.JwtData) (string, int64, error)
+	VerifyAccessToken(token string) (*entity.JwtData, error)
 }
 
 type Options struct {
 	signingKey string
-	issuer string
+	issuer     string
 }
 
+// GenerateToken implements Jwt.
 func (o *Options) GenerateToken(data *entity.JwtData) (string, int64, error) {
 	now := time.Now().Local()
 	expiresAt := now.Add(time.Hour * 24)
@@ -26,19 +27,18 @@ func (o *Options) GenerateToken(data *entity.JwtData) (string, int64, error) {
 	data.RegisteredClaims.Issuer = o.issuer
 	data.RegisteredClaims.NotBefore = jwt.NewNumericDate(now)
 	acToken := jwt.NewWithClaims(jwt.SigningMethodHS256, data)
-	accesToken, err := acToken.SignedString([]byte(o.signingKey)) 
-
+	accesToken, err := acToken.SignedString([]byte(o.signingKey))
 	if err != nil {
 		return "", 0, err
 	}
-
 	return accesToken, expiresAt.Unix(), nil
 }
 
+// VerifyAccessToken implements Jwt.
 func (o *Options) VerifyAccessToken(token string) (*entity.JwtData, error) {
-	parsedToken, err := jwt.Parse(token, func(t *jwt.Token)(interface{}, error) {
+	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("sign in method invalid")
+			return nil, fmt.Errorf("signing method invalid")
 		}
 		return []byte(o.signingKey), nil
 	})
@@ -56,13 +56,14 @@ func (o *Options) VerifyAccessToken(token string) (*entity.JwtData, error) {
 		jwtData := &entity.JwtData{
 			UserID: claim["user_id"].(float64),
 		}
+
 		return jwtData, nil
 	}
 
 	return nil, fmt.Errorf("token is not valid")
 }
 
-func NewJwt(cfg *config.Config) JWT {
+func NewJwt(cfg *config.Config) Jwt {
 	opt := new(Options)
 	opt.signingKey = cfg.App.JwtSecretKey
 	opt.issuer = cfg.App.JwtIssuer

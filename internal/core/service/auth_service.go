@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"gonews/config"
 	"gonews/internal/adapter/repository"
 	"gonews/internal/core/domain/entity"
@@ -22,11 +23,11 @@ type AuthService interface {
 
 type authService struct {
 	authRepository repository.AuthRepository
-	cfg *config.Config
-	jwtToken auth.JWT
+	cfg            *config.Config
+	jwtToken       auth.Jwt
 }
 
-func(a *authService) GetUserByEmail(ctx context.Context, req entity.LoginRequest) (*entity.AccessToken, error) {
+func (a *authService) GetUserByEmail(ctx context.Context, req entity.LoginRequest) (*entity.AccessToken, error) {
 	result, err := a.authRepository.GetUserByEmail(ctx, req)
 	if err != nil {
 		code = "[SERVICE] GetUserByEmail - 1"
@@ -36,7 +37,8 @@ func(a *authService) GetUserByEmail(ctx context.Context, req entity.LoginRequest
 
 	if checkPass := conv.CheckPasswordHash(req.Password, result.Password); !checkPass {
 		code = "[SERVICE] GetUserByEmail - 2"
-		log.Errorw(code, "Invalid Email or Password")
+		err = errors.New("invalid password")
+		log.Errorw(code, err)
 		return nil, err
 	}
 
@@ -44,7 +46,7 @@ func(a *authService) GetUserByEmail(ctx context.Context, req entity.LoginRequest
 		UserID: float64(result.ID),
 		RegisteredClaims: jwt.RegisteredClaims{
 			NotBefore: jwt.NewNumericDate(time.Now().Add(time.Hour * 2)),
-			ID: string(result.ID),
+			ID:        string(result.ID),
 		},
 	}
 
@@ -57,16 +59,16 @@ func(a *authService) GetUserByEmail(ctx context.Context, req entity.LoginRequest
 
 	resp := entity.AccessToken{
 		AccessToken: accessToken,
-		ExpiresAt: expiresAt,
+		ExpiresAt:   expiresAt,
 	}
 
 	return &resp, nil
 }
 
-func NewAuthService(authRepository repository.AuthRepository, cfg *config.Config, jwtToken auth.JWT) AuthService {
+func NewAuthService(authRepository repository.AuthRepository, cfg *config.Config, jwtToken auth.Jwt) AuthService {
 	return &authService{
 		authRepository: authRepository,
-		cfg: cfg,
-		jwtToken: jwtToken,
+		cfg:            cfg,
+		jwtToken:       jwtToken,
 	}
 }

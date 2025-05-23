@@ -23,17 +23,17 @@ type authRepository struct {
 func (a *authRepository) GetUserByEmail(ctx context.Context, req entity.LoginRequest) (*entity.UserEntity, error) {
 	var modelUser model.User
 
-	err = a.db.Where("email = ?", req.Email).First(modelUser).Error
+	err = a.db.Where("email = ?", req.Email).First(&modelUser).Error
 	if err != nil {
 		code = "[REPOSITORY] GetUserByEmail - 1"
 		log.Errorw(code, err)
-		return  nil, err
+		return nil, err
 	}
 
 	resp := entity.UserEntity{
-		ID: modelUser.ID,
-		Name: modelUser.Name,
-		Email: modelUser.Email,
+		ID:       modelUser.ID,
+		Name:     modelUser.Name,
+		Email:    modelUser.Email,
 		Password: modelUser.Password,
 	}
 

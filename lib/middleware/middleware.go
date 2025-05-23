@@ -14,16 +14,17 @@ type Middleware interface {
 }
 
 type Options struct {
-	authJwt auth.JWT
+	authJwt auth.Jwt
 }
 
+
 func (o *Options) CheckToken() func(*fiber.Ctx) error {
-	return func(c *fiber.Ctx) error  {
+	return func(c *fiber.Ctx) error {
 		var errorResponse response.ErrorResponseDefault
 		authHandler := c.Get("Authorization")
 		if authHandler == "" {
 			errorResponse.Meta.Status = false
-			errorResponse.Meta.Message= "Missing Authorization header"
+			errorResponse.Meta.Message = "Missing Authorization header"
 			return c.Status(fiber.StatusUnauthorized).JSON(errorResponse)
 		}
 
@@ -47,4 +48,3 @@ func NewMiddleware(cfg *config.Config) Middleware {
 
 	return opt
 }
-
