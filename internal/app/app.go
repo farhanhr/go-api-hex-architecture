@@ -36,18 +36,21 @@ func RunServer() {
 	_ = s3.NewFromConfig(cdfR2)
 
 	jwt := auth.NewJwt(cfg)
-	_ = middleware.NewMiddleware(cfg)
+	middlewareAuth := middleware.NewMiddleware(cfg)
 	_ = pagination.NewPagination()
 
 	//repository
 	authRepo := repository.NewAuthRepository(db.DB)
+	categoryRepo := repository.NewCategoryRepository(db.DB)
 
 
 	//service
 	authService := service.NewAuthService(authRepo, cfg, jwt)
+	categoryService := service.NewCategoryService(categoryRepo)
 
 	//handler
 	authHandler := handler.NewAuthHandler(authService)
+	categoryHandler := handler.NewCategoryHandler(categoryService)
 
 	app := fiber.New()
 	app.Use(cors.New())
@@ -58,6 +61,13 @@ func RunServer() {
 
 	api := app.Group("/api")
 	api.Post("/login", authHandler.Login)
+
+	adminApp := api.Group("/admin")
+	adminApp.Use(middlewareAuth.CheckToken())
+
+	//category
+	categoryApp := adminApp.Group("/categories")
+	categoryApp.Get("/", categoryHandler.GetCategories)
 	
 	go func() {
 		if cfg.App.AppPort == "" {
