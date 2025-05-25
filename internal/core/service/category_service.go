@@ -1,0 +1,59 @@
+package service
+
+import (
+	"context"
+	"gonews/internal/adapter/repository"
+	"gonews/internal/core/domain/entity"
+
+	"github.com/gofiber/fiber/v2/log"
+)
+
+type CategoryService interface {
+	GetCategories(ctx context.Context) ([]entity.CategoryEntity, error)
+	GetCategoryByID(ctx context.Context, id int64) (*entity.CategoryEntity, error)
+	CreateCategory(ctx context.Context, req entity.CategoryEntity) error
+	EditCategory(ctx context.Context, req entity.CategoryEntity) error
+	DeleteCategory(ctx context.Context, id int64) error
+}
+
+type categoryService struct {
+	categoryRepository repository.CategoryRepository
+}
+
+// CreateCategory implements CategoryService.
+func (c *categoryService) CreateCategory(ctx context.Context, req entity.CategoryEntity) error {
+	panic("unimplemented")
+}
+
+// DeleteCategory implements CategoryService.
+func (c *categoryService) DeleteCategory(ctx context.Context, id int64) error {
+	panic("unimplemented")
+}
+
+// EditCategory implements CategoryService.
+func (c *categoryService) EditCategory(ctx context.Context, req entity.CategoryEntity) error {
+	panic("unimplemented")
+}
+
+// GetCategories implements CategoryService.
+func (c *categoryService) GetCategories(ctx context.Context) ([]entity.CategoryEntity, error) {
+	result, err := c.categoryRepository.GetCategories(ctx)
+	if err != nil {
+		code = "[Service] GetCategory - 1"
+		log.Errorw(code, err)
+		return nil, err
+	}
+
+	return result, err
+}
+
+// GetCategoryByID implements CategoryService.
+func (c *categoryService) GetCategoryByID(ctx context.Context, id int64) (*entity.CategoryEntity, error) {
+	panic("unimplemented")
+}
+
+func NewCategoryService(categoryRepo repository.CategoryRepository) CategoryService {
+	return &categoryService{
+		categoryRepository: categoryRepo,
+	}
+}
