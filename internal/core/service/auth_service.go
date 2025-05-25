@@ -37,7 +37,7 @@ func (a *authService) GetUserByEmail(ctx context.Context, req entity.LoginReques
 
 	if checkPass := conv.CheckPasswordHash(req.Password, result.Password); !checkPass {
 		code = "[SERVICE] GetUserByEmail - 2"
-		err = errors.New("invalid password")
+		err = errors.New("invalid email or password password")
 		log.Errorw(code, err)
 		return nil, err
 	}
