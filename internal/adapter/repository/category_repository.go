@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"gonews/internal/core/domain/entity"
 	"gonews/internal/core/domain/model"
 
@@ -24,15 +25,27 @@ type categoryRepository struct {
 
 // CreateCategory implements CategoryRepository.
 func (c *categoryRepository) CreateCategory(ctx context.Context, req entity.CategoryEntity) error {
+	var countSlug int64
+	err = c.db.Table("categories").Where("slug = ?", req.Slug).Count(&countSlug).Error
+
+	if err != nil {
+		code = "[REPOSITORY] CreateCategory - 1"
+		log.Errorw(code, err)
+		return err
+	}
+
+	countSlug = countSlug+1
+	slug := fmt.Sprintf("%s-%d", req.Slug, countSlug)
+
 	modelCategory := model.Category{
 		Title: req.Title,
-		Slug: req.Slug,
+		Slug: slug,
 		CreatedByID: req.User.ID,
 	}
 
 	err = c.db.Create(&modelCategory).Error
 	if err != nil {
-		code = "[REPOSITORY] CreateCategory -1"
+		code = "[REPOSITORY] CreateCategory - 2"
 		log.Errorw(code, err)
 		return err
 	}
