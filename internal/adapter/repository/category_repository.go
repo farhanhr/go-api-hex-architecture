@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"gonews/internal/core/domain/entity"
 	"gonews/internal/core/domain/model"
-
 	"github.com/gofiber/fiber/v2/log"
 	"gorm.io/gorm"
 )
@@ -34,8 +33,11 @@ func (c *categoryRepository) CreateCategory(ctx context.Context, req entity.Cate
 		return err
 	}
 
-	countSlug = countSlug+1
-	slug := fmt.Sprintf("%s-%d", req.Slug, countSlug)
+	slug  := req.Slug
+	if countSlug > 0 {
+		countSlug = countSlug+1
+		slug = fmt.Sprintf("%s-%d", slug, countSlug)
+	}
 
 	modelCategory := model.Category{
 		Title: req.Title,
@@ -60,7 +62,29 @@ func (c *categoryRepository) DeleteCategory(ctx context.Context, id int64) error
 
 // EditCategory implements CategoryRepository.
 func (c *categoryRepository) EditCategory(ctx context.Context, req entity.CategoryEntity) error {
-	panic("unimplemented")
+	var countSlug int64
+	err = c.db.Table("categories").Where("slug = ?", req.Slug).Count(&countSlug).Error
+	if err != nil {
+		code = "[REPOSITORY] EditCategoryByID - 1"
+		log.Errorw(code, err)
+		return err
+	}
+	countSlug = countSlug + 1
+	slug := fmt.Sprintf("%s-%d", req.Slug, countSlug)
+	modelCategory := model.Category{
+		Title: req.Title,
+		Slug: slug,
+		CreatedByID: req.User.ID,
+	}
+
+	err = c.db.Where("id = ?", req.ID).Updates(&modelCategory).Error
+	if err != nil {
+		code = "[REPOSITORY] EditCategoryByID - 2"
+		log.Errorw(code, err)
+		return err
+	}
+
+	return nil
 }
 
 // GetCategories implements CategoryRepository.
