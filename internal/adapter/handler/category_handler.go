@@ -80,7 +80,7 @@ func (ch *categoryHandler) CreateCategory(c *fiber.Ctx) error {
 	defaultSuccessResponse.Pagination = nil
 	defaultSuccessResponse.Meta.Status = true
 	defaultSuccessResponse.Meta.Message = "Category created successfuly"
-	return c.JSON(defaultSuccessResponse)
+	return c.Status(fiber.StatusCreated).JSON(defaultSuccessResponse)
 }
 
 // DeleteCategory implements CategoryHandler.
@@ -90,7 +90,69 @@ func (ch *categoryHandler) DeleteCategory(c *fiber.Ctx) error {
 
 // EditCategory implements CategoryHandler.
 func (ch *categoryHandler) EditCategory(c *fiber.Ctx) error {
-	panic("unimplemented")
+	var req request.CategoryRequest
+	claims := c.Locals("user").(*entity.JwtData)
+	userID := claims.UserID
+
+	if userID == 0 {
+		code = "[HANDLER] EditCategoriesByID - 1"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Unauthorized"
+
+		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+	}
+
+	if err = c.BodyParser(&req); err != nil {
+		code = "[HANDLER] EditCategoriesByID - 2"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	if err = validatorLib.ValidateStruct(req); err != nil {
+		code = "[HANDLER] EditCategoriesByID -3"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	idParams := c.Params("categoryID")
+	id, err := conv.StringToInt64(idParams)
+	if err != nil {
+		code = "[HANDLER] EditCategoryByID - 2"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	reqEntity := entity.CategoryEntity{
+		ID: id,
+		Title: req.Title,
+		User: entity.UserEntity{
+			ID: int64(userID),
+		},
+	}
+
+	err = ch.categoryService.EditCategory(c.Context(), reqEntity)
+	if err != nil {
+		code = "[HANDLER] EditCategoryByID - 2"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
+	}
+
+	defaultSuccessResponse.Data = nil
+	defaultSuccessResponse.Pagination = nil
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Meta.Message = "Category updated successfuly"
+	return c.Status(fiber.StatusCreated).JSON(defaultSuccessResponse)
 }
 
 // GetCategories implements CategoryHandler.

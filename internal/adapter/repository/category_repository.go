@@ -70,7 +70,10 @@ func (c *categoryRepository) EditCategory(ctx context.Context, req entity.Catego
 		return err
 	}
 	countSlug = countSlug + 1
-	slug := fmt.Sprintf("%s-%d", req.Slug, countSlug)
+	slug := req.Slug
+	if countSlug > 0 {
+		slug = fmt.Sprintf("%s-%d", req.Slug, countSlug)
+	}
 	modelCategory := model.Category{
 		Title: req.Title,
 		Slug: slug,
