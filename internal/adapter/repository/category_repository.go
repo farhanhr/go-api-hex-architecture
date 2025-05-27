@@ -24,7 +24,20 @@ type categoryRepository struct {
 
 // CreateCategory implements CategoryRepository.
 func (c *categoryRepository) CreateCategory(ctx context.Context, req entity.CategoryEntity) error {
-	panic("unimplemented")
+	modelCategory := model.Category{
+		Title: req.Title,
+		Slug: req.Slug,
+		CreatedByID: req.User.ID,
+	}
+
+	err = c.db.Create(&modelCategory).Error
+	if err != nil {
+		code = "[REPOSITORY] CreateCategory -1"
+		log.Errorw(code, err)
+		return err
+	}
+
+	return nil
 }
 
 // DeleteCategory implements CategoryRepository.

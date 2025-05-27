@@ -56,7 +56,7 @@ func (ch *categoryHandler) GetCategories(c *fiber.Ctx) error {
 		log.Errorw(code, err)
 		errorResp.Meta.Status = false
 		errorResp.Meta.Message = err.Error()
-		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
 	}
 
 	categoryResponses := []response.SuccessCategoryResponse{}
