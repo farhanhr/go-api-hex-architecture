@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"gonews/config"
+	"gonews/internal/adapter/cloudflare"
 	"gonews/internal/adapter/handler"
 	"gonews/internal/adapter/repository"
 	"gonews/internal/core/service"
@@ -33,7 +34,8 @@ func RunServer() {
 	// Cloudflare R2
 
 	cdfR2 := cfg.LoadAWSConfig()
-	_ = s3.NewFromConfig(cdfR2)
+	s3Client := s3.NewFromConfig(cdfR2)
+	r2Adapter := cloudflare.NewCloudFlareR2Adapter(s3Client, cfg)
 
 	jwt := auth.NewJwt(cfg)
 	middlewareAuth := middleware.NewMiddleware(cfg)
@@ -42,15 +44,18 @@ func RunServer() {
 	//repository
 	authRepo := repository.NewAuthRepository(db.DB)
 	categoryRepo := repository.NewCategoryRepository(db.DB)
+	contentRepo := repository.NewContentRepository(db.DB)
 
 
 	//service
 	authService := service.NewAuthService(authRepo, cfg, jwt)
 	categoryService := service.NewCategoryService(categoryRepo)
+	contentService := service.NewContentService(contentRepo, cfg, r2Adapter)
 
 	//handler
 	authHandler := handler.NewAuthHandler(authService)
 	categoryHandler := handler.NewCategoryHandler(categoryService)
+	contentHandler := handler.NewContentHandler(contentService)
 
 	app := fiber.New()
 	app.Use(cors.New())
@@ -68,11 +73,19 @@ func RunServer() {
 	//category
 	categoryApp := adminApp.Group("/categories")
 	categoryApp.Get("/", categoryHandler.GetCategories)
-	categoryApp.Get("/:categoryID", categoryHandler.GetCategoryByID)
 	categoryApp.Post("/", categoryHandler.CreateCategory)
+	categoryApp.Get("/:categoryID", categoryHandler.GetCategoryByID)
 	categoryApp.Put("/:categoryId", categoryHandler.EditCategory)
 	categoryApp.Delete("/:categoryId", categoryHandler.DeleteCategory)
 	
+	//content
+	contentApp := adminApp.Group("/contents")
+	contentApp.Get("/", contentHandler.GetContents) 
+	// contentApp.Post("/", contentHandler.CreateContent) 
+	// contentApp.Get("/:contentId", contentHandler.GetContentById) 
+	// contentApp.Put("/:contentId", contentHandler.UpdateContent) 
+	// contentApp.Delete("/:contentId", contentHandler.DeleteContent) 
+	// contentApp.Post("/upload-image", contentHandler.UploadImageR2)
 	go func() {
 		if cfg.App.AppPort == "" {
 			cfg.App.AppPort = os.Getenv("APP_PORT")
