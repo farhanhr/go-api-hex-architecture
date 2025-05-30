@@ -8,6 +8,7 @@ import (
 	"gonews/internal/core/domain/entity"
 	"gonews/lib/auth"
 	"gonews/lib/conv"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2/log"
@@ -46,7 +47,7 @@ func (a *authService) GetUserByEmail(ctx context.Context, req entity.LoginReques
 		UserID: float64(result.ID),
 		RegisteredClaims: jwt.RegisteredClaims{
 			NotBefore: jwt.NewNumericDate(time.Now().Add(time.Hour * 2)),
-			ID:        string(result.ID),
+			ID:        strconv.FormatInt(result.ID, 10),
 		},
 	}
 
