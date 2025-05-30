@@ -29,6 +29,13 @@ func RunServer() {
 
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
+		return
+	}
+
+	err = os.MkdirAll("./temp/content", 0755)
+	if err != nil {
+		log.Fatalf("Error connecting to temp dir: %v", err)
+		return
 	}
 
 	// Cloudflare R2
@@ -94,6 +101,7 @@ func RunServer() {
 		err := app.Listen(":" + cfg.App.AppPort)
 		if err != nil {
 			log.Fatalf("error when starting server: %v", err)
+			return
 		}
 	}()
 
