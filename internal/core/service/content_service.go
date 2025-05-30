@@ -50,7 +50,6 @@ func (c *contentService) GetContents(ctx context.Context) ([]entity.ContentEntit
 	}
 
 	return result, nil
-	panic("unimplemented")
 }
 
 // UpdateContent implements ContentService.
