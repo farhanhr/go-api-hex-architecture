@@ -88,7 +88,7 @@ func RunServer() {
 	//content
 	contentApp := adminApp.Group("/contents")
 	contentApp.Get("/", contentHandler.GetContents) 
-	// contentApp.Post("/", contentHandler.CreateContent) 
+	contentApp.Post("/", contentHandler.CreateContent) 
 	contentApp.Get("/:contentID", contentHandler.GetContentById) 
 	// contentApp.Put("/:contentID", contentHandler.UpdateContent) 
 	// contentApp.Delete("/:contentID", contentHandler.DeleteContent) 
