@@ -4,7 +4,7 @@ import (
 	"gonews/internal/adapter/handler/response"
 	"gonews/internal/core/domain/entity"
 	"gonews/internal/core/service"
-	"time"
+	"gonews/lib/conv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -35,7 +35,54 @@ func (ch *contentHandler) DeleteContent(c *fiber.Ctx) error {
 
 // GetContentById implements ContentHandler.
 func (ch *contentHandler) GetContentById(c *fiber.Ctx) error {
-	panic("unimplemented")
+
+	claims := c.Locals("user").(*entity.JwtData)
+	if claims.UserID == 0 {
+		code = "[HANDLER] GetContentById - 1"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Unauthorized"
+
+		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+	}
+
+	idParam := c.Params("contentID")
+	contentID, err := conv.StringToInt64(idParam)
+	if err != nil {
+		code = "[HANDLER] GetContentByID - 2"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	result, err := ch.contentService.GetContentById(c.Context(), contentID)
+	if err != nil {
+		code = "[HANDLER] GetContentByID - 3"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
+	}
+
+	respContent := response.ContentResponse{
+		ID:           result.ID,
+		Title:        result.Title,
+		Excerpt:      result.Excerpt,
+		Description:  result.Description,
+		Image:        result.Image,
+		Tags:         result.Tags,
+		Status:       result.Status,
+		CategoryID:   result.CategoryID,
+		CreatedById:  result.CreatedById,
+		CreatedAt:    result.CreatedAt.Local().String(),
+		CategoryName: result.Category.Title,
+		Author:       result.User.Name,
+	}
+
+	defaultSuccessResponse.Data = respContent
+
+	return c.JSON(defaultSuccessResponse)
 }
 
 // GetContents implements ContentHandler.
@@ -75,7 +122,7 @@ func (ch *contentHandler) GetContents(c *fiber.Ctx) error {
 			Status:       content.Status,
 			CategoryID:   content.CategoryID,
 			CreatedById:  content.CreatedById,
-			CreatedAt:    content.CreatedAt.Format(time.RFC3339),
+			CreatedAt:    content.CreatedAt.Local().String(),
 			CategoryName: content.Category.Title,
 			Author:       content.User.Name,
 		}

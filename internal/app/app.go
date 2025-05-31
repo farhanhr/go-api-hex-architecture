@@ -82,16 +82,16 @@ func RunServer() {
 	categoryApp.Get("/", categoryHandler.GetCategories)
 	categoryApp.Post("/", categoryHandler.CreateCategory)
 	categoryApp.Get("/:categoryID", categoryHandler.GetCategoryByID)
-	categoryApp.Put("/:categoryId", categoryHandler.EditCategory)
-	categoryApp.Delete("/:categoryId", categoryHandler.DeleteCategory)
+	categoryApp.Put("/:categoryID", categoryHandler.EditCategory)
+	categoryApp.Delete("/:categoryID", categoryHandler.DeleteCategory)
 	
 	//content
 	contentApp := adminApp.Group("/contents")
 	contentApp.Get("/", contentHandler.GetContents) 
 	// contentApp.Post("/", contentHandler.CreateContent) 
-	// contentApp.Get("/:contentId", contentHandler.GetContentById) 
-	// contentApp.Put("/:contentId", contentHandler.UpdateContent) 
-	// contentApp.Delete("/:contentId", contentHandler.DeleteContent) 
+	contentApp.Get("/:contentID", contentHandler.GetContentById) 
+	// contentApp.Put("/:contentID", contentHandler.UpdateContent) 
+	// contentApp.Delete("/:contentID", contentHandler.DeleteContent) 
 	// contentApp.Post("/upload-image", contentHandler.UploadImageR2)
 	go func() {
 		if cfg.App.AppPort == "" {
