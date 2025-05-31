@@ -9,10 +9,11 @@ type Content struct {
 	Description string     `gorm:"description"`
 	Image       string     `gorm:"image"`
 	Tags        string     `gorm:"tags"`
+	Status      string     `gorm:"status"`
 	CategoryID  int64      `gorm:"category_id"`
 	CreatedByID int64      `gorm:"created_by_id"`
 	User        User       `gorm:"foreignKey:CreatedByID"`
 	Category    Category   `gorm:"foreignKey:CategoryID"`
-	CreatedAt   time.Time  `gorm:"create_at"`
+	CreatedAt   time.Time  `gorm:"created_at"`
 	UpdatedAt   *time.Time `gorm:"updated_at"`
 }

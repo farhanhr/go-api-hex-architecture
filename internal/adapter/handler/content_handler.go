@@ -30,7 +30,41 @@ func (ch *contentHandler) CreateContent(c *fiber.Ctx) error {
 
 // DeleteContent implements ContentHandler.
 func (ch *contentHandler) DeleteContent(c *fiber.Ctx) error {
-	panic("unimplemented")
+	claims := c.Locals("user").(*entity.JwtData)
+	if claims.UserID == 0 {
+		code = "[HANDLER] DeleteContent - 1"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Unauthorized"
+
+		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+	}
+
+	idParam := c.Params("contentID")
+	contentID, err := conv.StringToInt64(idParam)
+	if err != nil {
+		code = "[HANDLER] DeleteContent - 2"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	err = ch.contentService.DeleteContent(c.Context(), contentID)
+
+	if err != nil {
+		code = "[HANDLER] DeleteContent - 2"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
+	}
+
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Pagination = nil
+	defaultSuccessResponse.Meta.Message = "content deleted successfuly"
+
+	return c.JSON(defaultSuccessResponse)
 }
 
 // GetContentById implements ContentHandler.
@@ -64,6 +98,11 @@ func (ch *contentHandler) GetContentById(c *fiber.Ctx) error {
 		errorResp.Meta.Message = err.Error()
 		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
 	}
+
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Pagination = nil
+	defaultSuccessResponse.Meta.Message = "content fetched successfuly"
+	defaultSuccessResponse.Data = nil
 
 	respContent := response.ContentResponse{
 		ID:           result.ID,
