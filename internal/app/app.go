@@ -91,7 +91,7 @@ func RunServer() {
 	contentApp.Post("/", contentHandler.CreateContent) 
 	contentApp.Get("/:contentID", contentHandler.GetContentById) 
 	// contentApp.Put("/:contentID", contentHandler.UpdateContent) 
-	// contentApp.Delete("/:contentID", contentHandler.DeleteContent) 
+	contentApp.Delete("/:contentID", contentHandler.DeleteContent) 
 	// contentApp.Post("/upload-image", contentHandler.UploadImageR2)
 	go func() {
 		if cfg.App.AppPort == "" {

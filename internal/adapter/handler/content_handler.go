@@ -30,7 +30,7 @@ type contentHandler struct {
 func (ch *contentHandler) CreateContent(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*entity.JwtData)
 	if claims.UserID == 0 {
-		code = "[HANDLER] DeleteContent - 1"
+		code = "[HANDLER] CreateContent - 1"
 		log.Errorw(code, err)
 		errorResp.Meta.Status = false
 		errorResp.Meta.Message = "Unauthorized"
@@ -50,7 +50,7 @@ func (ch *contentHandler) CreateContent(c *fiber.Ctx) error {
 	}
 
 	if err = validatorLib.ValidateStruct(&req); err != nil {
-		code = "[HANDLER] CreateContent - 2"
+		code = "[HANDLER] CreateContent - 3"
 		log.Errorw(code, err)
 		errorResp.Meta.Status = false
 		errorResp.Meta.Message = err.Error()
@@ -72,7 +72,7 @@ func (ch *contentHandler) CreateContent(c *fiber.Ctx) error {
 
 	err = ch.contentService.CreateContent(c.Context(), reqEntity)
 	if claims.UserID == 0 {
-		code = "[HANDLER] DeleteContent - 1"
+		code = "[HANDLER] CreateContent - 4"
 		log.Errorw(code, err)
 		errorResp.Meta.Status = false
 		errorResp.Meta.Message = err.Error()
@@ -112,7 +112,7 @@ func (ch *contentHandler) DeleteContent(c *fiber.Ctx) error {
 	err = ch.contentService.DeleteContent(c.Context(), contentID)
 
 	if err != nil {
-		code = "[HANDLER] DeleteContent - 2"
+		code = "[HANDLER] DeleteContent - 3"
 		log.Errorw(code, err)
 		errorResp.Meta.Status = false
 		errorResp.Meta.Message = err.Error()
@@ -161,7 +161,6 @@ func (ch *contentHandler) GetContentById(c *fiber.Ctx) error {
 	defaultSuccessResponse.Meta.Status = true
 	defaultSuccessResponse.Pagination = nil
 	defaultSuccessResponse.Meta.Message = "content fetched successfuly"
-	defaultSuccessResponse.Data = nil
 
 	respContent := response.ContentResponse{
 		ID:           result.ID,
@@ -235,7 +234,74 @@ func (ch *contentHandler) GetContents(c *fiber.Ctx) error {
 
 // UpdateContent implements ContentHandler.
 func (ch *contentHandler) UpdateContent(c *fiber.Ctx) error {
-	panic("unimplemented")
+	claims := c.Locals("user").(*entity.JwtData)
+	if claims.UserID == 0 {
+		code = "[HANDLER] UpdateContent - 1"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Unauthorized"
+
+		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+	}
+
+	userID := claims.UserID
+	var req request.ContentRequest
+	if err  = c.BodyParser(&req); err != nil {
+		code = "[HANDLER] UpdateContent - 2"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Invalid Request Body"
+
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	if err = validatorLib.ValidateStruct(&req); err != nil {
+		code = "[HANDLER] UpdateContent - 3"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	idParam := c.Params("contentID")
+	contentID, err := conv.StringToInt64(idParam)
+	if err != nil {
+		code = "[HANDLER] UpdateContent - 4"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	tags := strings.Split(req.Tags, ",")
+	reqEntity := entity.ContentEntity{
+		ID: 		 contentID,
+		Title:       req.Title,
+		Excerpt:     req.Excerpt,
+		Description: req.Description,
+		Image:       req.Image,
+		Tags:        tags,
+		Status:      req.Status,
+		CategoryID:  req.CategoryID,
+		CreatedById: int64(userID),
+	}
+
+	err = ch.contentService.UpdateContent(c.Context(), reqEntity)
+	if err != nil {
+		code = "[HANDLER] UpdateContent - 5"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
+	}
+
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Pagination = nil
+	defaultSuccessResponse.Meta.Message = "content updated successfuly"
+	defaultSuccessResponse.Data = nil
+
+	return c.JSON(defaultSuccessResponse)
 }
 
 // UploadImageR2 implements ContentHandler.
