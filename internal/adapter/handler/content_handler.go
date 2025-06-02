@@ -74,7 +74,7 @@ func (ch *contentHandler) CreateContent(c *fiber.Ctx) error {
 	}
 
 	err = ch.contentService.CreateContent(c.Context(), reqEntity)
-	if claims.UserID == 0 {
+	if err != nil {
 		code = "[HANDLER] CreateContent - 4"
 		log.Errorw(code, err)
 		errorResp.Meta.Status = false
@@ -85,6 +85,7 @@ func (ch *contentHandler) CreateContent(c *fiber.Ctx) error {
 
 	defaultSuccessResponse.Meta.Status = true
 	defaultSuccessResponse.Pagination = nil
+	defaultSuccessResponse.Data = nil
 	defaultSuccessResponse.Meta.Message = "Content created successfuly"
 
 	return c.Status(fiber.StatusCreated).JSON(defaultSuccessResponse)
@@ -124,6 +125,7 @@ func (ch *contentHandler) DeleteContent(c *fiber.Ctx) error {
 
 	defaultSuccessResponse.Meta.Status = true
 	defaultSuccessResponse.Pagination = nil
+	defaultSuccessResponse.Data = nil
 	defaultSuccessResponse.Meta.Message = "content deleted successfuly"
 
 	return c.JSON(defaultSuccessResponse)
@@ -342,7 +344,7 @@ func (ch *contentHandler) UploadImageR2(c *fiber.Ctx) error {
 
 	req.Image = fmt.Sprintf("./temp/content/%s", file.Filename)
 	reqEntity := entity.FileUploadEntity{
-		Name: fmt.Sprintf("%f-%d", claims.UserID, time.Now().UnixNano()),
+		Name: fmt.Sprintf("%d-%d", int64(claims.UserID), time.Now().UnixNano()),
 		Path: req.Image,
 	}
 

@@ -9,7 +9,7 @@ type ContentResponse struct {
 	Tags         []string `json:"tags,omitempty"`
 	Status       string   `json:"status"`
 	CategoryID   int64    `json:"category_id,omitempty"`
-	CreatedById  int64    `json:"category_by_id,omitempty"`
+	CreatedById  int64    `json:"created_by_id,omitempty"`
 	CreatedAt    string   `json:"created_at"`
 	CategoryName string   `json:"category_name"`
 	Author       string   `json:"author"`
