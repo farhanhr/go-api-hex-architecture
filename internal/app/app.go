@@ -52,17 +52,20 @@ func RunServer() {
 	authRepo := repository.NewAuthRepository(db.DB)
 	categoryRepo := repository.NewCategoryRepository(db.DB)
 	contentRepo := repository.NewContentRepository(db.DB)
+	userRepo := repository.NewUserRepository(db.DB)
 
 
 	//service
 	authService := service.NewAuthService(authRepo, cfg, jwt)
 	categoryService := service.NewCategoryService(categoryRepo)
 	contentService := service.NewContentService(contentRepo, cfg, r2Adapter)
+	userService := service.NewUserService(userRepo)
 
 	//handler
 	authHandler := handler.NewAuthHandler(authService)
 	categoryHandler := handler.NewCategoryHandler(categoryService)
 	contentHandler := handler.NewContentHandler(contentService)
+	userHandler := handler.NewUserHandler(userService)
 
 	app := fiber.New()
 	app.Use(cors.New())
@@ -93,6 +96,11 @@ func RunServer() {
 	contentApp.Put("/:contentID", contentHandler.UpdateContent) 
 	contentApp.Delete("/:contentID", contentHandler.DeleteContent) 
 	contentApp.Post("/upload-image", contentHandler.UploadImageR2)
+
+	//user 
+	userApp := adminApp.Group("/users")
+	userApp.Get("/profile", userHandler.GetUserByID)
+	userApp.Put("/update-password", userHandler.UpdatePassword)
 	go func() {
 		if cfg.App.AppPort == "" {
 			cfg.App.AppPort = os.Getenv("APP_PORT")
