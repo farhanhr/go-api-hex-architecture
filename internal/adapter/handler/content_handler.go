@@ -342,7 +342,7 @@ func (ch *contentHandler) UploadImageR2(c *fiber.Ctx) error {
 
 	req.Image = fmt.Sprintf("./temp/content/%s", file.Filename)
 	reqEntity := entity.FileUploadEntity{
-		Name: fmt.Sprintf("%d-%d", claims.UserID, time.Now().UnixNano()),
+		Name: fmt.Sprintf("%f-%d", claims.UserID, time.Now().UnixNano()),
 		Path: req.Image,
 	}
 
