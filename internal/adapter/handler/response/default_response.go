@@ -19,5 +19,5 @@ type PaginationResponse struct {
 	TotalRecords int `json:"total_records"`
 	Page         int `json:"page"`
 	PerPage      int `json:"per_page"`
-	TotalPage    int `json:"total_page"`
+	TotalPages    int `json:"total_pages"`
 }
