@@ -20,19 +20,16 @@ type PsqlDB struct {
 	DBMaxIdle int    `json:"db_max_idle"`
 }
 
-type CloudflareR2 struct {
-	Name      string `json:"name"`
-	ApiKey    string `json:"api_key"`
-	ApiSecret string `json:"api_secret"`
-	Token     string `json:"token"`
-	AccountID string `json:"account_id"`
-	PublicURL string `json:"public_url"`
+type ImageKitConfig struct {
+    PublicKey  string `json:"public_key"`
+    PrivateKey string `json:"private_key"`
+    UrlEndpoint string `json:"url_endpoint"`
 }
 
 type Config struct {
 	App  App
 	Psql PsqlDB
-	R2   CloudflareR2
+	ImageKit   ImageKitConfig `json:"imagekit"`
 }
 
 func NewConfig() *Config {
@@ -53,13 +50,10 @@ func NewConfig() *Config {
 			DBMaxOpen: viper.GetInt("DATABASE_MAX_OPEN_CONNECTION"),
 			DBMaxIdle: viper.GetInt("DATABASE_MAX_IDLE_CONNECTION"),
 		},
-		R2: CloudflareR2{
-			Name:      viper.GetString("CLOUDFLARE_R2_BUCKET_NAME"),
-			ApiKey:    viper.GetString("CLOUDFLARE_R2_API_KEY"),
-			ApiSecret: viper.GetString("CLOUDFLARE_R2_API_SECRET"),
-			Token:     viper.GetString("CLOUDFLARE_R2_TOKEN"),
-			AccountID: viper.GetString("CLOUDFLARE_R2_ACCOUNT_ID"),
-			PublicURL: viper.GetString("CLOUDFLARE_R2_PUBLIC_URL"),
+		ImageKit: ImageKitConfig{
+			PublicKey:   viper.GetString("IMAGEKIT_PUBLIC_KEY"),
+			PrivateKey:  viper.GetString("IMAGEKIT_PRIVATE_KEY"),
+			UrlEndpoint: viper.GetString("IMAGEKIT_URL_ENDPOINT"),
 		},
 	}
 }
