@@ -29,7 +29,7 @@ type ImageKitConfig struct {
 type Config struct {
 	App  App
 	Psql PsqlDB
-	ImageKit   ImageKitConfig `json:"imagekit"`
+	IK   ImageKitConfig `json:"imagekit"`
 }
 
 func NewConfig() *Config {
@@ -50,7 +50,7 @@ func NewConfig() *Config {
 			DBMaxOpen: viper.GetInt("DATABASE_MAX_OPEN_CONNECTION"),
 			DBMaxIdle: viper.GetInt("DATABASE_MAX_IDLE_CONNECTION"),
 		},
-		ImageKit: ImageKitConfig{
+		IK: ImageKitConfig{
 			PublicKey:   viper.GetString("IMAGEKIT_PUBLIC_KEY"),
 			PrivateKey:  viper.GetString("IMAGEKIT_PRIVATE_KEY"),
 			UrlEndpoint: viper.GetString("IMAGEKIT_URL_ENDPOINT"),
