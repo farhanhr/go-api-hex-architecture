@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"gonews/internal/core/domain/entity"
 	"gonews/internal/core/domain/model"
+	"math"
 	"strings"
 
 	"github.com/gofiber/fiber/v2/log"
@@ -12,7 +14,7 @@ import (
 )
 
 type ContentRepository interface {
-	GetContents(ctx context.Context) ([]entity.ContentEntity, error)
+	GetContents(ctx context.Context, query entity.QueryString) ([]entity.ContentEntity, int64, int64, error)
 	GetContentById(ctx context.Context, id int64) (*entity.ContentEntity, error)
 	CreateContent(ctx context.Context, req entity.ContentEntity) error
 	UpdateContent(ctx context.Context, req entity.ContentEntity) error
@@ -97,19 +99,48 @@ func (c *contentRepository) GetContentById(ctx context.Context, id int64) (*enti
 }
 
 // GetContents implements ContentRepository.
-func (c *contentRepository) GetContents(ctx context.Context) ([]entity.ContentEntity, error) {
+func (c *contentRepository) GetContents(ctx context.Context, query entity.QueryString) ([]entity.ContentEntity, int64, int64, error) {
 	var modelContents []model.Content
+	var countData int64
 
-	err = c.db.Order("created_at DESC").Preload(clause.Associations).Find(&modelContents).Error
+	order := fmt.Sprintf("%s %s", query.OrderBy, query.OrderType)
+	offset := (query.Page - 1) * query.Limit
+	status := ""
+	if query.Status != "" {
+		status = query.Status
+	}
+
+	sqlMain := c.db.Preload(clause.Associations).
+		Where("title ilike ? OR excerpt ilike ? OR description ilike ?", "%"+query.Search+"%", "%"+query.Search+"%", "%"+query.Search+"%").
+		Where("status LIKE ?", "%"+status+"%")
+
+	if query.CategoryID > 0 {
+		sqlMain = sqlMain.Where("category_id =?", query.CategoryID)
+	}
+
+	err = sqlMain.Model(&modelContents).Count(&countData).Error
 	if err != nil {
 		code = "[REPOSITORY] GetContents - 1"
 		log.Errorw(code, err)
-		return nil, err 
+		return nil, 0, 0, err
+	}
+
+	totalPages := int(math.Ceil(float64(countData) / float64(query.Limit)))
+
+	err = sqlMain.
+		Order(order).
+		Limit(query.Limit).
+		Offset(offset).
+		Find(&modelContents).Error
+	if err != nil {
+		code = "[REPOSITORY] GetContents - 2"
+		log.Errorw(code, err)
+		return nil, 0, 0, err
 	}
 
 	resps := []entity.ContentEntity{}
 	for _, val := range modelContents {
-		tags :=  strings.Split(val.Tags, ",")
+		tags := strings.Split(val.Tags, ",")
 		resp := entity.ContentEntity{
 			ID:          val.ID,
 			Title:       val.Title,
@@ -117,25 +148,24 @@ func (c *contentRepository) GetContents(ctx context.Context) ([]entity.ContentEn
 			Description: val.Description,
 			Image:       val.Image,
 			Tags:        tags,
-			Status:      val.Description,
+			Status:      val.Status,
 			CategoryID:  val.CategoryID,
 			CreatedById: val.CreatedByID,
 			CreatedAt:   val.CreatedAt,
-			Category:    entity.CategoryEntity{
-				ID:    val.CategoryID,
-				Title: val.Title,
-				Slug:  val.Description,
+			Category: entity.CategoryEntity{
+				ID:    val.Category.ID,
+				Title: val.Category.Title,
+				Slug:  val.Category.Slug,
 			},
-			User:        entity.UserEntity{
-				ID:       val.User.ID,
-				Name:     val.User.Name,
+			User: entity.UserEntity{
+				ID:   val.User.ID,
+				Name: val.User.Name,
 			},
 		}
 
 		resps = append(resps, resp)
 	}
-	
-	return resps, nil
+	return resps, countData, int64(totalPages), nil
 }
 
 // UpdateContent implements ContentRepository.
