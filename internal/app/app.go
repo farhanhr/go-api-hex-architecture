@@ -114,6 +114,11 @@ func RunServer() {
 	userApp := adminApp.Group("/users")
 	userApp.Get("/profile", userHandler.GetUserByID)
 	userApp.Put("/update-password", userHandler.UpdatePassword)
+
+	//fe
+	feApp := api.Group("/fe")
+	feApp.Get("/categories", categoryHandler.GetCategoryFE)
+
 	go func() {
 		if cfg.App.AppPort == "" {
 			cfg.App.AppPort = os.Getenv("APP_PORT")

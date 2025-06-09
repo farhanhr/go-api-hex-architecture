@@ -20,10 +20,41 @@ type CategoryHandler interface {
 	CreateCategory(c *fiber.Ctx) error
 	EditCategory(c *fiber.Ctx) error
 	DeleteCategory(c *fiber.Ctx) error
+
+	GetCategoryFE(c *fiber.Ctx) error
 }
 
 type categoryHandler struct {
 	categoryService service.CategoryService
+}
+
+func (ch *categoryHandler) GetCategoryFE(c *fiber.Ctx) error {
+	results, err := ch.categoryService.GetCategories(c.Context())
+	if err != nil {
+		code = "[HANDLER] GetCategoryFE - 1"
+		log.Errorw(code, err)
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
+	}
+
+	categoryResponses := []response.SuccessCategoryResponse{}
+	for _, result := range results {
+		categoryResponse := response.SuccessCategoryResponse{
+			ID:            result.ID,
+			Title:         result.Title,
+			Slug:          result.Slug,
+			CreatedByName: result.User.Name,
+		}
+		categoryResponses = append(categoryResponses, categoryResponse)
+	}
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Pagination = nil
+	defaultSuccessResponse.Meta.Message = "Categories fetched successfully"
+	defaultSuccessResponse.Data = categoryResponses
+
+	return c.JSON(defaultSuccessResponse)
 }
 
 // CreateCategory implements CategoryHandler.
