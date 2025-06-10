@@ -41,11 +41,6 @@ func RunServer() {
 	// Imagekit
 	ikAdapter := imagekit.NewImageKitAdapter(cfg)
 	
-	// Cloudflare R2
-	
-	// cdfR2 := cfg.LoadAWSConfig()
-	// s3Client := s3.NewFromConfig(cdfR2)
-	// r2Adapter := cloudflare.NewCloudFlareR2Adapter(s3Client, cfg)
 
 	jwt := auth.NewJwt(cfg)
 	middlewareAuth := middleware.NewMiddleware(cfg)

@@ -35,19 +35,17 @@ func (ik *imageKitAdapter) UploadImage(req *entity.FileUploadEntity) (string, er
 	var b bytes.Buffer
 	writer := multipart.NewWriter(&b)
 
-	// form fields
 	writer.WriteField("fileName", req.Name)
 	writer.WriteField("publicKey", ik.cfg.IK.PublicKey)
 	writer.WriteField("useUniqueFileName", "true")
-	writer.WriteField("folder", "/content") // optional folder in ImageKit
+	writer.WriteField("folder", "/content")
 
 	part, err := writer.CreateFormFile("file", req.Name)
 	if err != nil {
 		return "", fmt.Errorf("failed to create form file: %w", err)
 	}
 
-	_, err = io.Copy(part, file)
-	if err != nil {
+	if _, err = io.Copy(part, file); err != nil {
 		return "", fmt.Errorf("failed to copy file: %w", err)
 	}
 	writer.Close()
@@ -59,7 +57,8 @@ func (ik *imageKitAdapter) UploadImage(req *entity.FileUploadEntity) (string, er
 	}
 
 	reqHttp.Header.Set("Content-Type", writer.FormDataContentType())
-	reqHttp.Header.Set("Authorization", "Basic "+basicAuth(ik.cfg.IK.PrivateKey))
+	encodedKey := base64.StdEncoding.EncodeToString([]byte(ik.cfg.IK.PrivateKey + ":"))
+	reqHttp.Header.Set("Authorization", "Basic "+encodedKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(reqHttp)
@@ -83,7 +82,3 @@ func (ik *imageKitAdapter) UploadImage(req *entity.FileUploadEntity) (string, er
 	return result.Url, nil
 }
 
-func basicAuth(privateKey string) string {
-	auth := privateKey + ":"
-	return base64.StdEncoding.EncodeToString([]byte(auth))
-}
