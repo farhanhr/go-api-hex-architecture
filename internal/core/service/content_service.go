@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"gonews/config"
-	"gonews/internal/adapter/cloudflare"
+	"gonews/internal/adapter/imagekit"
 	"gonews/internal/adapter/repository"
 	"gonews/internal/core/domain/entity"
 
@@ -22,7 +22,7 @@ type ContentService interface {
 type contentService struct {
 	contentRepo repository.ContentRepository
 	cfg         *config.Config
-	r2          cloudflare.CloudflareR2Adapter
+	ik          imagekit.ImageKitAdapter
 }
 
 // CreateContent implements ContentService.
@@ -33,7 +33,7 @@ func (c *contentService) CreateContent(ctx context.Context, req entity.ContentEn
 		log.Errorw(code, err)
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -45,7 +45,7 @@ func (c *contentService) DeleteContent(ctx context.Context, id int64) error {
 		log.Errorw(code, err)
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -57,7 +57,7 @@ func (c *contentService) GetContentById(ctx context.Context, id int64) (*entity.
 		log.Errorw(code, err)
 		return nil, err
 	}
-	 
+
 	return result, nil
 }
 
@@ -75,11 +75,11 @@ func (c *contentService) GetContents(ctx context.Context, query entity.QueryStri
 
 // UpdateContent implements ContentService.
 func (c *contentService) UpdateContent(ctx context.Context, req entity.ContentEntity) error {
-	err =c.contentRepo.UpdateContent(ctx, req)
+	err = c.contentRepo.UpdateContent(ctx, req)
 	if err != nil {
 		code = "[SERVICE] UpdateContent - 1"
 		log.Errorw(code, err)
-		return err 
+		return err
 	}
 
 	return nil
@@ -87,20 +87,19 @@ func (c *contentService) UpdateContent(ctx context.Context, req entity.ContentEn
 
 // UploadImageR2 implements ContentService.
 func (c *contentService) UploadImageR2(ctx context.Context, req entity.FileUploadEntity) (string, error) {
-	urlImage, err := c.r2.UploadImage(&req)
+	urlImage, err := c.ik.UploadImage(&req)
 	if err != nil {
-		code = "[SERVICE] UploadImageR2 - 1"
-		log.Errorw(code, err)
+		log.Errorw("[SERVICE] UploadImageImageKit - 1", err)
 		return "", err 
 	}
-
 	return urlImage, nil
 }
 
-func NewContentService(repo repository.ContentRepository, cfg *config.Config, r2 cloudflare.CloudflareR2Adapter) ContentService {
+
+func NewContentService(repo repository.ContentRepository, cfg *config.Config, ik imagekit.ImageKitAdapter) ContentService {
 	return &contentService{
 		contentRepo: repo,
 		cfg:         cfg,
-		r2:          r2,
+		ik:          ik,
 	}
 }

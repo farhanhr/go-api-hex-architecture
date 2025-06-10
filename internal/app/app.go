@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 	"gonews/config"
-	"gonews/internal/adapter/cloudflare"
 	"gonews/internal/adapter/handler"
+	"gonews/internal/adapter/imagekit"
 	"gonews/internal/adapter/repository"
 	"gonews/internal/core/service"
 	"gonews/lib/auth"
@@ -16,7 +16,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -39,11 +38,14 @@ func RunServer() {
 		return
 	}
 
+	// Imagekit
+	ikAdapter := imagekit.NewImageKitAdapter(cfg)
+	
 	// Cloudflare R2
-
-	cdfR2 := cfg.LoadAWSConfig()
-	s3Client := s3.NewFromConfig(cdfR2)
-	r2Adapter := cloudflare.NewCloudFlareR2Adapter(s3Client, cfg)
+	
+	// cdfR2 := cfg.LoadAWSConfig()
+	// s3Client := s3.NewFromConfig(cdfR2)
+	// r2Adapter := cloudflare.NewCloudFlareR2Adapter(s3Client, cfg)
 
 	jwt := auth.NewJwt(cfg)
 	middlewareAuth := middleware.NewMiddleware(cfg)
@@ -59,7 +61,7 @@ func RunServer() {
 	//service
 	authService := service.NewAuthService(authRepo, cfg, jwt)
 	categoryService := service.NewCategoryService(categoryRepo)
-	contentService := service.NewContentService(contentRepo, cfg, r2Adapter)
+	contentService := service.NewContentService(contentRepo, cfg, ikAdapter)
 	userService := service.NewUserService(userRepo)
 
 	//handler
