@@ -92,7 +92,7 @@ func (ch *contentHandler) GetContentWithQuery(c *fiber.Ctx) error {
 		}
 	}
 
-	limit := 6
+	limit := 10
 	if c.Query("limit") != "" {
 		limit, err = conv.StringToInt(c.Query("limit"))
 		if err != nil {
